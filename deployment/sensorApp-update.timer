@@ -1,0 +1,15 @@
+# Installieren auf Pi A nach /etc/systemd/system/sensorApp-update.timer.
+# Prüft ungefähr jede Minute auf neue Commits - siehe startSkript.md, Punkt 4,
+# für die Begründung und wie man das Intervall ändert.
+
+[Unit]
+Description=Regelmäßige Git-Update-Prüfung für sensorApp
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+
+Persistent=true
+
+[Install]
+WantedBy=timers.target

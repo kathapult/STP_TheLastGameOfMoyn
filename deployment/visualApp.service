@@ -1,0 +1,45 @@
+# Installieren auf Pi B nach /etc/systemd/system/visualApp.service.
+#
+# systemd startet das Release-Binary direkt im Vordergrund. MainPID ist damit
+# die echte visualApp und ein Absturz oder unerwartetes Ende wird zuverlässig
+# erkannt. Die Ausgabe ist mit `journalctl -u visualApp.service` verfügbar.
+#
+# visualApp öffnet ein Vollbildfenster auf DISPLAY=:0. ExecStartPre wartet auf
+# den X11-Socket und die Zugangsdatei der Desktop-Sitzung. TimeoutStartSec
+# verhindert, dass ein fehlender X-Server den Boot unbegrenzt blockiert.
+
+[Unit]
+Description=VisualApp (Pi B, Projektion)
+Wants=network-online.target
+BindsTo=display-manager.service
+PartOf=display-manager.service
+After=network-online.target display-manager.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=exec
+User=kathapult
+WorkingDirectory=/opt/thelastgameofmoyn/current/visualApp
+
+EnvironmentFile=/etc/thelastgameofmoyn/visualApp.env
+
+ExecStartPre=/usr/local/libexec/thelastgameofmoyn/wait-for-x11
+# Wartet auf den fest konfigurierten Ausgang, setzt Modus/Bildrate/Primary und
+# deaktiviert optional alle anderen Ausgänge. Die Unit startet bei einer
+# ungültigen Beamerkonfiguration nicht in einen formal schwarzen Showprozess.
+ExecStartPre=/usr/local/libexec/thelastgameofmoyn/prepare-visual-display
+ExecStart=/opt/thelastgameofmoyn/current/visualApp/visualApp
+
+Restart=always
+RestartSec=10
+TimeoutStartSec=90
+TimeoutStopSec=15
+KillSignal=SIGTERM
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=visualApp
+
+[Install]
+WantedBy=graphical.target

@@ -1,0 +1,21 @@
+# Installieren auf Pi B nach /etc/systemd/system/visualApp-update.service.
+# Läuft einmal durch und beendet sich danach wieder - ausgelöst von
+# visualApp-update.timer, nicht direkt gestartet.
+
+[Unit]
+Description=Prüft visualApp auf Git-Updates
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+
+# Das kurzlebige privilegierte Orchestratorskript führt Git und Build explizit
+# als kathapult aus. Es verwendet Root für Release-/Zustandspfade,
+# Unit-Installation und systemctl und endet nach diesem Update-Lauf.
+ExecStart=/usr/local/sbin/thelastgameofmoyn-update-app visualApp
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=visualApp-update

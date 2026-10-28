@@ -1,0 +1,43 @@
+# Installieren auf Pi A nach /etc/systemd/system/sensorApp.service.
+#
+# systemd startet das Release-Binary direkt im Vordergrund. MainPID ist damit
+# die echte sensorApp und ein Absturz oder unerwartetes Ende wird zuverlässig
+# erkannt. Die Ausgabe ist mit `journalctl -u sensorApp.service` verfügbar.
+#
+# Obwohl der Produktionsmodus ofAppNoWindow verwendet, benötigt der derzeitige
+# Raspberry-Pi-/openFrameworks-Aufbau eine laufende X11-Sitzung. ExecStartPre
+# wartet deshalb auf deren Socket und Zugangsdatei. TimeoutStartSec verhindert,
+# dass ein fehlender X-Server den Boot unbegrenzt blockiert.
+
+[Unit]
+Description=SensorApp (Pi A, Kinect-Erkennung)
+Wants=network-online.target
+BindsTo=display-manager.service
+PartOf=display-manager.service
+After=network-online.target display-manager.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=exec
+User=kathapult
+WorkingDirectory=/opt/thelastgameofmoyn/current/sensorApp
+
+EnvironmentFile=/etc/thelastgameofmoyn/sensorApp.env
+
+ExecStartPre=/usr/local/libexec/thelastgameofmoyn/wait-for-x11
+# Production sends neither a debug window nor a mask preview.
+ExecStart=/opt/thelastgameofmoyn/current/sensorApp/sensorApp
+
+Restart=always
+RestartSec=10
+TimeoutStartSec=90
+TimeoutStopSec=15
+KillSignal=SIGTERM
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sensorApp
+
+[Install]
+WantedBy=graphical.target

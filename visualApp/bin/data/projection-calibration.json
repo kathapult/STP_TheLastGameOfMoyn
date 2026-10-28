@@ -1,0 +1,17 @@
+{
+    "version": 1,
+    "surfaceWidthCm": 188.0,
+    "surfaceHeightCm": 79.0,
+    "cornerRadiusFraction": 0.88,
+    "baseEdge": "bottom",
+    "viewport": {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1.0,
+        "height": 1.0
+    },
+    "outputRotation": "clockwise90",
+    "sensorToTableRotation": "counterClockwise90",
+    "sensorMirrorX": false,
+    "sensorMirrorY": false
+}

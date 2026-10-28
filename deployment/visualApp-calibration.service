@@ -1,0 +1,41 @@
+# Temporary calibration service on Pi B. It deliberately has no [Install]
+# section and therefore cannot be enabled as a boot service. startSkript.md
+# documents how to enter and leave this profile.
+
+[Unit]
+Description=VisualApp-Kalibrierung mit HUD und Sensor-Preview (Pi B)
+Wants=network-online.target
+BindsTo=display-manager.service
+PartOf=display-manager.service
+After=network-online.target display-manager.service
+Conflicts=visualApp.service visualApp-update.timer
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=exec
+User=kathapult
+# ProjectionSettings writes a temporary site-calibration file before rename.
+# Keep that file private to the application user and its primary group.
+UMask=0027
+WorkingDirectory=/opt/thelastgameofmoyn/current/visualApp
+
+EnvironmentFile=/etc/thelastgameofmoyn/visualApp.env
+
+# Do not abort an update that is already running. The first calibration start
+# is skipped and may be repeated after the update finishes. The conflict above
+# stops the timer for the remainder of the calibration session.
+ExecCondition=/usr/bin/bash -c "! /usr/bin/systemctl is-active --quiet visualApp-update.service"
+ExecStartPre=/usr/local/libexec/thelastgameofmoyn/wait-for-x11
+ExecStartPre=/usr/local/libexec/thelastgameofmoyn/prepare-visual-display
+ExecStart=/opt/thelastgameofmoyn/current/visualApp/visualApp --calibration
+
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=90
+TimeoutStopSec=15
+KillSignal=SIGTERM
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=visualApp-calibration

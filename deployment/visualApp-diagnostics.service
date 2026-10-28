@@ -1,0 +1,48 @@
+# On-demand diagnostics service on Pi B. It deliberately has no [Install]
+# section and therefore cannot become part of the normal boot path.
+
+[Unit]
+Description=VisualApp-Diagnose-HUD (Pi B, On-Demand)
+Wants=network-online.target
+BindsTo=display-manager.service
+PartOf=display-manager.service
+After=network-online.target display-manager.service
+
+# Stop every process that can replace the active release or compete for the
+# display and diagnostics ports. The matching ordering dependency makes each
+# stop complete before the diagnostics process is started.
+Conflicts=visualApp.service visualApp-calibration.service visualApp-update.service visualApp-update.timer
+After=visualApp.service visualApp-calibration.service visualApp-update.service visualApp-update.timer
+
+# Restore the complete production profile after a manual stop, clean exit,
+# failed start or crash. "fail" prevents this recovery request from replacing
+# a deliberate restart, calibration switch or system shutdown transaction.
+OnSuccess=visualApp.service visualApp-update.timer
+OnFailure=visualApp.service visualApp-update.timer
+OnSuccessJobMode=fail
+OnFailureJobMode=fail
+
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=exec
+User=kathapult
+WorkingDirectory=/opt/thelastgameofmoyn/current/visualApp
+
+EnvironmentFile=/etc/thelastgameofmoyn/visualApp.env
+
+ExecStartPre=/usr/local/libexec/thelastgameofmoyn/wait-for-x11
+ExecStartPre=/usr/local/libexec/thelastgameofmoyn/prepare-visual-display
+ExecStart=/opt/thelastgameofmoyn/current/visualApp/visualApp --diagnostics
+
+# A diagnostics failure returns to production instead of restarting the
+# maintenance profile indefinitely.
+Restart=no
+TimeoutStartSec=90
+TimeoutStopSec=15
+KillSignal=SIGTERM
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=visualApp-diagnostics
